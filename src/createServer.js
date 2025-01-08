@@ -3,7 +3,9 @@
 // and import (require) them here
 
 const http = require('http');
-const convertToCase = require('../src/convertToCase').convertToCase;
+const { detectCase } = require('../src/convertToCase/detectCase');
+const { toWords } = require('../src/convertToCase/toWords');
+const { wordsToCase } = require('../src/convertToCase/wordsToCase');
 
 const createServer = () => {
   const server = http.createServer((req, res) => {
@@ -14,6 +16,8 @@ const createServer = () => {
       const normalizedURL = new URL(req.url, `http://${req.headers.host}`);
       const text = normalizedURL.pathname.slice(1);
       const toCase = normalizedURL.searchParams.get('toCase');
+      const originalCase = detectCase(text);
+      const words = toWords(text, originalCase);
 
       if (!text) {
         errors.push({
@@ -33,13 +37,13 @@ const createServer = () => {
 
       if (toCase) {
         try {
-          const converted = convertToCase(text, toCase);
+          const convertedText = wordsToCase(words, toCase);
 
           responseData = {
-            originalCase: converted.originalCase,
+            originalCase,
             targetCase: toCase,
             originalText: text,
-            convertedText: converted.convertedText,
+            convertedText,
           };
         } catch (conversionError) {
           errors.push({ message: conversionError.message });
